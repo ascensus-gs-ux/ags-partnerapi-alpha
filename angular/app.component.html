@@ -1,0 +1,166 @@
+<div class="app">
+
+  <!-- Sidebar -->
+  <aside [class]="'sidebar' + (sidebarOpen ? ' is-open' : '')">
+    <button class="sidebar__toggle"
+            (click)="sidebarOpen = !sidebarOpen"
+            [attr.aria-expanded]="sidebarOpen">
+      <app-icon-menu [size]="20"></app-icon-menu>
+      <span>Menu</span>
+    </button>
+
+    <div class="sidebar__logo">
+      <img class="sidebar__logo-img" [src]="LOGO" alt="Plan Logo" />
+    </div>
+
+    <nav class="sidebar__links" aria-label="Primary">
+      <button [class]="'nav-item' + (nav === 'api' ? ' is-active' : '')"
+              (click)="goToApi()">
+        <span class="nav-item__icon" aria-hidden="true"><app-icon-cog></app-icon-cog></span>
+        <span>API Integration</span>
+        <span *ngIf="hasApiError" class="nav-item__dot" aria-label="Errors reported"></span>
+      </button>
+      <button [class]="'nav-item' + (nav === 'tickets' ? ' is-active' : '')"
+              (click)="nav = 'tickets'; sidebarOpen = false">
+        <span class="nav-item__icon" aria-hidden="true"><app-icon-help-filled></app-icon-help-filled></span>
+        <span>Support Tickets</span>
+        <span *ngIf="relatedTickets" class="nav-item__dot" aria-label="Related tickets"></span>
+      </button>
+    </nav>
+
+    <div class="sidebar__help">
+      <h2 class="sidebar__help-title">Need help with our apps or have a question?</h2>
+      <p class="sidebar__help-body" style="font-size:16px;width:100%">
+        Just submit a support ticket, and we'll be happy to assist you!
+      </p>
+      <button class="btn btn--secondary btn--sm sidebar__help-cta"
+              (click)="nav = 'tickets'; sidebarOpen = false">
+        Submit a Ticket
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Mobile header -->
+    <header class="mobile-header">
+      <div class="mobile-header__logo">
+        <img [src]="LOGO" alt="Plan Logo" />
+      </div>
+      <div class="mobile-header__bar">
+        <span class="mobile-header__title">DevConnect Portal</span>
+        <button class="mobile-header__hamburger"
+                (click)="drawerOpen = true"
+                aria-label="Open menu"
+                [attr.aria-expanded]="drawerOpen">
+          <app-icon-menu [size]="24"></app-icon-menu>
+        </button>
+      </div>
+    </header>
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <h1 class="topbar__title">DevConnect Portal</h1>
+      <div class="topbar__user">
+        <span class="avatar" aria-hidden="true">LO</span>
+        <span class="user-name">Leia Organa</span>
+      </div>
+      <button class="topbar__logout" (click)="logout.emit()">Log Out</button>
+    </header>
+
+    <!-- Page content -->
+    <section class="page">
+
+      <!-- Support Tickets -->
+      <ng-container *ngIf="nav === 'tickets'">
+        <div class="page__head">
+          <h1 class="page__title">Support Tickets</h1>
+          <agsup-button class="btn btn--primary btn--lg" (click)="openBlankTicket()">
+            Open New Ticket <app-icon-plus [size]="18"></app-icon-plus>
+          </agsup-button>
+        </div>
+
+        <app-tickets-grid
+          [rows]="tickets"
+          [multiPlan]="multiPlan"
+          [planChoices]="PARTNER_PLANS"
+          (onToast)="showToast($event)"
+          (onEditTicket)="editingTicket = $event"
+          (onUpdateTicket)="updateTicket($event)"
+          (onAction)="handleAction($event)">
+        </app-tickets-grid>
+      </ng-container>
+
+      <!-- API Integration -->
+      <ng-container *ngIf="nav !== 'tickets'">
+        <app-application-api-page
+          [applications]="applications"
+          [apiSubview]="apiSubview"
+          [docsTarget]="docsTarget"
+          (applicationsChange)="applications = $event"
+          (submitTicket)="handleSubmitTicket($event)"
+          (goToTickets)="nav = 'tickets'; sidebarOpen = false"
+          (backToList)="apiSubview = 'list'"
+          (toasted)="showToast($event)">
+        </app-application-api-page>
+      </ng-container>
+
+    </section>
+  </main>
+
+  <!-- New ticket modal -->
+  <app-new-ticket-modal
+    *ngIf="showModal"
+    [prefill]="modalPrefill"
+    [applications]="applications"
+    [plans]="PARTNER_PLANS"
+    (onClose)="showModal = false; modalPrefill = null"
+    (onSubmit)="handleSubmit($event)">
+  </app-new-ticket-modal>
+
+  <!-- Edit ticket modal -->
+  <app-new-ticket-modal
+    *ngIf="editingTicket"
+    mode="edit"
+    [ticket]="editingTicket"
+    [applications]="applications"
+    [plans]="PARTNER_PLANS"
+    (onClose)="editingTicket = null"
+    (onSubmit)="handleEditSubmit($event)">
+  </app-new-ticket-modal>
+
+  <!-- Toast -->
+  <app-toast
+    *ngIf="toast"
+    [message]="toast!"
+    (closed)="toast = null">
+  </app-toast>
+
+  <!-- Mobile drawer overlay -->
+  <div *ngIf="drawerOpen" class="drawer-overlay" (click)="drawerOpen = false">
+    <aside class="drawer" role="dialog" aria-label="Menu" (click)="$event.stopPropagation()">
+      <nav class="drawer__nav" aria-label="Primary">
+        <button [class]="'drawer__item' + (nav === 'api' ? ' is-active' : '')"
+                (click)="goToApi(); drawerOpen = false">
+          <span class="nav-item__icon" aria-hidden="true">&#9881;</span>
+          <span>API Integration</span>
+        </button>
+        <button [class]="'drawer__item' + (nav === 'tickets' ? ' is-active' : '')"
+                (click)="nav = 'tickets'; drawerOpen = false">
+          <span class="nav-item__icon" aria-hidden="true">&#10067;</span>
+          <span>Support Tickets</span>
+        </button>
+      </nav>
+      <div class="drawer__divider"></div>
+      <div class="drawer__user">
+        <span class="avatar" aria-hidden="true">LO</span>
+        <span class="drawer__user-name">Leia Organa</span>
+      </div>
+      <button class="drawer__logout" (click)="logout.emit(); drawerOpen = false">
+        Log Out
+      </button>
+    </aside>
+  </div>
+
+</div>

@@ -1,0 +1,296 @@
+<ng-container *ngIf="apiSubview === 'docs'">
+  <app-api-docs-page
+    [target]="docsTarget"
+    (back)="backToList.emit()"
+    (toasted)="toasted.emit($event)">
+  </app-api-docs-page>
+</ng-container>
+
+<ng-container *ngIf="apiSubview !== 'docs'">
+
+  <!-- Page head -->
+  <div class="page__head">
+    <h1 class="page__title">API Integration</h1>
+    <div class="page__head-support">
+      <div class="page__head-support__actions">
+        <agsup-button
+          type="button"
+          class="btn btn--secondary btn--lg btn--icon-right"
+          (click)="goToTickets.emit()">
+          Submit a Ticket &#8250;
+        </agsup-button>
+        <a class="btn btn--primary btn--lg btn--icon-right"
+           [href]="SWAGGER_BASE" target="_blank" rel="noopener noreferrer">
+          View Full API Reference &#8599;
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Outage banner -->
+  <app-outage-banner
+    *ngIf="hasOutage && !bannerDismissed"
+    (dismiss)="bannerDismissed = true">
+  </app-outage-banner>
+
+  <!-- Mobile tab select -->
+  <div class="apiint__mobile-select">
+    <select class="select" [value]="tab" (change)="tab = $any($event.target).value" aria-label="Select a section">
+      <option *ngFor="let t of API_TABS" [value]="t.id">{{ t.label }}</option>
+    </select>
+  </div>
+
+  <!-- Main layout -->
+  <div class="apiint">
+
+    <!-- Left rail -->
+    <div class="apiint__rail" role="tablist" aria-label="API integration sections">
+      <div *ngFor="let t of API_TABS"
+           [class]="'apiint__tab-block' + (tab === t.id ? ' is-active' : '')">
+        <button
+          type="button"
+          role="tab"
+          [attr.aria-selected]="tab === t.id"
+          [class]="'apiint__tab' + (tab === t.id ? ' is-active' : '')"
+          (click)="tab = t.id"
+          [attr.data-screen-label]="'API Integration / ' + t.label">
+          <span class="apiint__tab-label">{{ t.label }}</span>
+          <span *ngIf="t.id === 'configure' && hasOutage"
+                class="apiint__tab-dot" aria-label="Errors reported"></span>
+        </button>
+        <ul *ngIf="tab === t.id" class="apiint__subs">
+          <li *ngFor="let s of tabSections(t.id)">
+            <button type="button" class="apiint__sublink" (click)="scrollToId(s.id)">
+              <span class="apiint__sublink-text">{{ s.label }}</span>
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Content area -->
+    <div class="apiint__main">
+
+      <!-- Get Started tab -->
+      <app-get-started-tab
+        *ngIf="tab === 'start'"
+        (onGoConfigure)="onGoConfigure()"
+        (onGoTickets)="goToTickets.emit()"
+        (onGoTroubleshoot)="tab = 'troubleshoot'">
+      </app-get-started-tab>
+
+      <!-- How to Use tab -->
+      <app-how-to-use-tab
+        *ngIf="tab === 'use'"
+        (onToast)="toasted.emit($event)"
+        (onGoConfigure)="onGoConfigure()"
+        (onGoTickets)="goToTickets.emit()">
+      </app-how-to-use-tab>
+
+      <!-- Troubleshoot tab -->
+      <app-troubleshoot-tab
+        *ngIf="tab === 'troubleshoot'"
+        (onGoTickets)="goToTickets.emit()"
+        (onGoConfigure)="onGoConfigure()">
+      </app-troubleshoot-tab>
+
+      <!-- Configure APIs tab -->
+      <div *ngIf="tab === 'configure'">
+        <div class="int-intro">
+          <h2 class="int-intro__title">Configure APIs</h2>
+          <p class="int-intro__lead">
+            Enable the feeds you need and generate their API keys. Expand a feed for its
+            endpoint, an example call, and its requirements.
+          </p>
+        </div>
+
+        <!-- TreeList -->
+        <div id="cfg-table" class="treelist"
+             style="--tl-cols: minmax(0, 1fr) 220px 180px 168px"
+             role="treegrid" aria-label="Application APIs">
+
+          <!-- Head -->
+          <div class="treelist__head">
+            <div [class]="'treelist__th ' + sortClass('name')">
+              <button (click)="onSort('name')"><span>Application</span> &#8597;</button>
+            </div>
+            <div [class]="'treelist__th ' + sortClass('status')">
+              <button (click)="onSort('status')"><span>Status</span> &#8597;</button>
+            </div>
+            <div [class]="'treelist__th ' + sortClass('activity')">
+              <button (click)="onSort('activity')"><span>Last Activity</span> &#8597;</button>
+            </div>
+            <div class="treelist__th"></div>
+          </div>
+
+          <!-- App rows -->
+          <ng-container *ngFor="let app of sortedApps">
+
+            <!-- Application row -->
+            <div [class]="'tl-row tl-row--app' + (app.status === 'error' ? ' tl-row--error' : '')"
+                 (click)="toggleApp(app.id)"
+                 [attr.data-screen-label]="app.name">
+              <div class="tl-cell">
+                <div class="tl-name tl-name--app">
+                  <button [class]="'tl-caret' + (isAppOpen(app.id) ? ' is-open' : '')"
+                          [attr.aria-label]="isAppOpen(app.id) ? 'Collapse' : 'Expand'"
+                          [attr.aria-expanded]="isAppOpen(app.id)"
+                          (click)="$event.stopPropagation(); toggleApp(app.id)">
+                    &#8250;
+                  </button>
+                  <span class="tl-name__label">{{ app.name }}</span>
+                </div>
+              </div>
+              <div class="tl-cell tl-cell--status">
+                <app-api-status
+                  [status]="app.status"
+                  [label]="app.statusLabel"
+                  [showInfo]="!!app.error"
+                  (infoClick)="errorModal = { title: app.name, error: app.error }">
+                </app-api-status>
+                <span *ngIf="app.lastActivity" class="tl-status-activity">as of {{ app.lastActivity }}</span>
+              </div>
+              <div class="tl-cell tl-activity">{{ appActivity(app) }}</div>
+              <div class="tl-cell tl-cell--actions">
+                <agsup-button *ngIf="app.status === 'error'"
+                  class="btn btn--primary btn--action-mobile"
+                  aria-label="Submit a ticket"
+                  title="Submit a ticket"
+                  (click)="$event.stopPropagation(); onSubmitTicket(app, null, app.errorContext)">
+                  <span class="btn__label">Submit Ticket</span>
+                  <span class="btn__mobile-icon">&#9881;</span>
+                </agsup-button>
+              </div>
+            </div>
+
+            <!-- Feed rows (shown when app is expanded) -->
+            <ng-container *ngIf="isAppOpen(app.id)">
+              <ng-container *ngFor="let feed of app.feeds">
+
+                <!-- Feed row -->
+                <div [class]="'tl-row tl-row--feed' + (feed.status === 'error' ? ' tl-row--error' : '')"
+                     (click)="toggleFeed(feed)"
+                     [attr.data-screen-label]="app.name + ' / ' + (feed.method ? feed.method + ' ' : '') + feed.name + (feed.version ? ' (' + feed.version + ')' : '')">
+                  <div class="tl-cell">
+                    <div class="tl-name tl-name--feed">
+                      <button [class]="'tl-caret' + (isFeedOpen(feed.id) ? ' is-open' : '')"
+                              [attr.aria-label]="isFeedOpen(feed.id) ? 'Collapse' : 'Expand'"
+                              [attr.aria-expanded]="isFeedOpen(feed.id)"
+                              (click)="$event.stopPropagation(); toggleFeed(feed)">
+                        &#8250;
+                      </button>
+
+                      <!-- With method badge -->
+                      <span *ngIf="feed.method" class="tl-name__label">
+                        <span class="feed-name-stack">
+                          <span [class]="'method-badge method-badge--' + feed.method.toLowerCase()">{{ feed.method }}</span>
+                          <span class="feed-name-stack__resource">
+                            {{ feed.name }}
+                            <span *ngIf="feed.version" class="feed-name-stack__version"> {{ feed.version }}</span>
+                          </span>
+                          <span *ngIf="feed.lastActivity" class="feed-name-stack__activity">{{ feed.lastActivity }}</span>
+                        </span>
+                      </span>
+                      <!-- Without method badge -->
+                      <span *ngIf="!feed.method" class="tl-name__label">{{ feed.name }}</span>
+                    </div>
+                  </div>
+
+                  <div class="tl-cell tl-cell--status">
+                    <ng-container *ngIf="feed.enabled">
+                      <app-api-status
+                        *ngIf="feed.status === 'error'"
+                        status="error"
+                        label="Outage Reported"
+                        [showInfo]="!!feed.error"
+                        (infoClick)="errorModal = { title: app.name + ' / ' + feed.name, error: feed.error }">
+                      </app-api-status>
+                      <app-api-status
+                        *ngIf="feed.status !== 'error'"
+                        status="active"
+                        label="Active">
+                      </app-api-status>
+                      <span *ngIf="feed.lastActivity" class="tl-status-activity">as of {{ feed.lastActivity }}</span>
+                    </ng-container>
+                  </div>
+
+                  <div class="tl-cell tl-activity">{{ feed.enabled ? feed.lastActivity || '' : '' }}</div>
+
+                  <div class="tl-cell tl-cell--actions">
+                    <agsup-button *ngIf="!feed.enabled"
+                      class="btn btn--secondary btn--action-mobile"
+                      aria-label="Enable feed"
+                      title="Enable feed"
+                      [attr.aria-expanded]="isFeedOpen(feed.id)"
+                      (click)="$event.stopPropagation(); toggleFeed(feed)">
+                      <span class="btn__label">Enable</span>
+                      <span class="btn__mobile-icon">+</span>
+                    </agsup-button>
+                  </div>
+                </div>
+
+                <!-- Feed panel -->
+                <div *ngIf="isFeedOpen(feed.id)" (click)="$event.stopPropagation()">
+                  <app-feed-panel
+                    *ngIf="feed.enabled"
+                    [feed]="feed"
+                    (toasted)="toasted.emit($event)"
+                    (regenerate)="regenerate(app.id, feed.id)"
+                    (submitTicket)="onSubmitTicket(app, feed, app.name + ' — ' + feed.name + ': issue reported from the API console.')">
+                  </app-feed-panel>
+                  <app-feed-enable-panel
+                    *ngIf="!feed.enabled"
+                    [feed]="feed"
+                    (generate)="enableFeed(app.id, feed.id)">
+                  </app-feed-enable-panel>
+                </div>
+
+              </ng-container>
+            </ng-container>
+
+          </ng-container>
+        </div><!-- /.treelist -->
+
+        <!-- Updates & releases -->
+        <div id="cfg-updates" class="int-block">
+          <h3 class="int-block__title">Updates &amp; releases</h3>
+          <p class="int-block__sub">Recent changes to the account service and partner integration.</p>
+          <ul class="releases">
+            <li class="release">
+              <div class="release__meta">
+                <div class="release__date">May 28, 2026</div>
+                <div class="release__ver">v2.4.0</div>
+              </div>
+              <div class="release__note">Added Account schema 2.0 (GET / PUT / DELETE). Schemas 1.0 and 1.1 remain available.</div>
+            </li>
+            <li class="release">
+              <div class="release__meta">
+                <div class="release__date">May 12, 2026</div>
+                <div class="release__ver">v2.3.1</div>
+              </div>
+              <div class="release__note">Multiple-field validation errors are now returned together in a single 400 response.</div>
+            </li>
+            <li class="release">
+              <div class="release__meta">
+                <div class="release__date">Apr 21, 2026</div>
+                <div class="release__ver">v2.3.0</div>
+              </div>
+              <div class="release__note">Self-service certificate upload and key rotation available in the Admin Portal.</div>
+            </li>
+          </ul>
+        </div>
+
+      </div><!-- /configure -->
+
+    </div><!-- /.apiint__main -->
+  </div><!-- /.apiint -->
+
+  <!-- Error details modal -->
+  <app-error-details-modal
+    *ngIf="errorModal"
+    [title]="errorModal!.title"
+    [error]="errorModal!.error"
+    (close)="errorModal = null">
+  </app-error-details-modal>
+
+</ng-container>

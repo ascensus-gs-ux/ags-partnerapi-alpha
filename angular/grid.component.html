@@ -1,0 +1,218 @@
+<div class="grid-card" role="region" aria-label="Support tickets">
+
+  <!-- Toolbar -->
+  <div class="grid-toolbar">
+    <div class="grid-toolbar__search">
+      <span class="grid-toolbar__search-icon">🔍</span>
+      <input
+        placeholder="Search tickets…"
+        [value]="search"
+        (input)="onSearchChange($any($event.target).value)"
+        aria-label="Search tickets" />
+    </div>
+    <div class="grid-toolbar__meta">
+      {{ total === rows.length ? (total + ' ticket' + (total === 1 ? '' : 's')) : (total + ' of ' + rows.length) }}
+      <agsup-button
+        *ngIf="filterKeys > 0"
+        class="btn btn--ghost"
+        style="margin-left:12px;padding:4px 10px;font-size:13px"
+        (click)="clearAllFilters()">
+        Clear filters
+      </agsup-button>
+    </div>
+  </div>
+
+  <!-- Desktop table -->
+  <div class="grid-scroll">
+    <table class="grid-table" [style.minWidth.px]="minWidth">
+      <colgroup>
+        <col *ngFor="let c of columns" [style.width.px]="c.width" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th *ngFor="let col of columns"
+              [style.width.px]="col.width"
+              [class]="sortClass(col)">
+            <div class="th-inner">
+              <button class="th-label"
+                      (click)="col.sortable !== false && onSort(col.key)"
+                      [title]="col.sortable === false ? '' : 'Sort'">
+                <span style="overflow:hidden;text-overflow:ellipsis">{{ col.label }}</span>
+                <span *ngIf="col.sortable !== false" class="sort-arrows" aria-hidden="true">
+                  <svg class="arrow-up" width="8" height="5" viewBox="0 0 8 5" fill="none">
+                    <path d="M4 0L8 5H0L4 0Z" fill="currentColor"/>
+                  </svg>
+                  <svg class="arrow-down" width="8" height="5" viewBox="0 0 8 5" fill="none" style="margin-top:2px">
+                    <path d="M4 5L0 0H8L4 5Z" fill="currentColor"/>
+                  </svg>
+                </span>
+              </button>
+              <button *ngIf="col.filterable"
+                      [class]="'th-filter' + (hasFilter(col) ? ' is-active' : '')"
+                      (click)="$event.stopPropagation(); filterOpen === col.key ? filterOpen = null : openFilter(col, $any($event.currentTarget))"
+                      [attr.aria-label]="'Filter ' + col.label"
+                      title="Filter">
+                ▼
+              </button>
+            </div>
+            <div class="col-resizer" (mousedown)="startResize($event, col)"></div>
+
+            <!-- Filter popover -->
+            <div *ngIf="filterOpen === col.key"
+                 class="popover popover--filter"
+                 (click)="$event.stopPropagation()">
+              <div class="filter-title">Filter {{ col.label }}</div>
+              <div *ngIf="col.choices; else textFilter">
+                <label *ngFor="let c of col.choices">
+                  <input type="checkbox"
+                         [checked]="filterDraft?.includes(c)"
+                         (change)="toggleDraftChoice(c)" />
+                  <span>{{ c }}</span>
+                </label>
+              </div>
+              <ng-template #textFilter>
+                <input class="input" placeholder="Contains…"
+                       [value]="filterDraft || ''"
+                       (input)="filterDraft = $any($event.target).value"
+                       autofocus />
+              </ng-template>
+              <div class="filter-divider"></div>
+              <div class="filter-actions">
+                <agsup-button class="btn btn--ghost" (click)="clearFilter(col)">Clear</agsup-button>
+                <agsup-button class="btn btn--primary" (click)="applyFilter(col)">Apply</agsup-button>
+              </div>
+            </div>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of paged"
+            [class]="activeMenu?.row?.id === row.id ? 'is-active' : ''"
+            (click)="handleRowClick(row, $event)">
+          <td>
+            <a class="cell-id" href="#"
+               (click)="$event.preventDefault(); $event.stopPropagation(); handleAction('view', row)">
+              {{ row.id }}
+            </a>
+          </td>
+          <td [title]="row.type">{{ row.type }}</td>
+          <td><app-status-cell [value]="row.status"></app-status-cell></td>
+          <td><app-priority-pill [value]="row.priority"></app-priority-pill></td>
+          <td *ngIf="multiPlan" [title]="row.plan">{{ row.plan || '—' }}</td>
+          <td *ngIf="!multiPlan" [title]="row.submitter">{{ row.submitter }}</td>
+          <td><app-date-cell [iso]="row.date"></app-date-cell></td>
+          <td class="cell-actions">
+            <agsup-button class="icon-btn row-more-btn"
+                    aria-label="Row actions"
+                    (click)="openMenu(row, $event)">
+              ⋮
+            </agsup-button>
+          </td>
+        </tr>
+        <tr *ngIf="paged.length === 0">
+          <td [attr.colspan]="columns.length"
+              style="text-align:center;color:var(--color-gray-60);padding:48px 16px;height:auto">
+            No tickets match the current filters.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Mobile cards -->
+  <ul class="tickets-cards" aria-label="Support tickets">
+    <li *ngFor="let row of paged"
+        class="ticket-card"
+        (click)="handleRowClick(row, $event)">
+      <div class="ticket-card__top">
+        <a class="cell-id" href="#"
+           (click)="$event.preventDefault(); $event.stopPropagation(); handleAction('view', row)">
+          {{ row.id }}
+        </a>
+        <agsup-button class="icon-btn row-more-btn"
+                aria-label="Row actions"
+                (click)="openMenu(row, $event)">⋮</agsup-button>
+      </div>
+      <div class="ticket-card__badges">
+        <app-status-cell [value]="row.status"></app-status-cell>
+        <app-priority-pill [value]="row.priority"></app-priority-pill>
+      </div>
+      <div class="ticket-card__meta">
+        <span class="ticket-card__submitter">{{ multiPlan ? (row.plan || '—') : row.submitter }}</span>
+        <app-date-cell [iso]="row.date"></app-date-cell>
+      </div>
+    </li>
+    <li *ngIf="paged.length === 0" class="ticket-card ticket-card--empty">
+      No tickets match the current filters.
+    </li>
+  </ul>
+
+  <!-- Pager -->
+  <div class="k-pager" aria-label="Pagination">
+    <div class="k-pager-sizes">
+      <span class="k-pager-select">
+        <select [value]="pageSize"
+                (change)="onPageSizeChange(+$any($event.target).value)"
+                aria-label="Items per page">
+          <option *ngFor="let n of [5,10,20,50]" [value]="n">{{ n }}</option>
+        </select>
+      </span>
+      <span class="k-pager-sizes-label">items per page</span>
+    </div>
+    <div class="k-pager-info">{{ startIdx }}–{{ endIdx }} of {{ total }}</div>
+    <nav class="k-pager-nav" aria-label="Pagination">
+      <agsup-button class="k-pager-btn k-pager-arrow"
+              (click)="page = page - 1"
+              [disabled]="page === 1"
+              aria-label="Previous page">‹</agsup-button>
+      <ng-container *ngFor="let p of pages; let i = index">
+        <span *ngIf="!isPage(p)" class="k-pager-ellipsis">…</span>
+        <agsup-button *ngIf="isPage(p)"
+                [class]="'k-pager-btn' + (p === safePage ? ' is-selected' : '')"
+                (click)="page = p"
+                [attr.aria-label]="'Page ' + p"
+                [attr.aria-current]="p === safePage ? 'page' : null">
+          {{ p }}
+        </agsup-button>
+      </ng-container>
+      <agsup-button class="k-pager-btn k-pager-arrow"
+              (click)="page = page + 1"
+              [disabled]="page >= pageCount"
+              aria-label="Next page">›</agsup-button>
+    </nav>
+  </div>
+
+  <!-- Row action menu -->
+  <div *ngIf="activeMenu"
+       class="popover"
+       [style.top.px]="menuTop()"
+       [style.left.px]="menuLeft()"
+       style="min-width:200px"
+       (mouseleave)="activeMenu = null">
+    <agsup-button class="popover__item" (click)="handleAction('view', activeMenu!.row)">View details</agsup-button>
+    <agsup-button class="popover__item" (click)="handleAction('edit', activeMenu!.row)">Edit ticket</agsup-button>
+    <div class="popover__divider"></div>
+    <agsup-button class="popover__item popover__item--danger"
+            (click)="handleAction('cancel', activeMenu!.row)"
+            [disabled]="activeMenu!.row.status === 'Closed'">
+      Cancel ticket
+    </agsup-button>
+  </div>
+
+  <!-- View ticket modal -->
+  <app-view-ticket-modal
+    *ngIf="viewTicket"
+    [ticket]="viewTicket"
+    [multiPlan]="multiPlan"
+    (onClose)="viewTicket = null">
+  </app-view-ticket-modal>
+
+  <!-- Confirm cancel modal -->
+  <app-confirm-modal
+    *ngIf="confirmCancel"
+    [message]="'You\'re about to cancel ticket ' + confirmCancel.id + '. This will close the ticket.'"
+    (confirm)="doCancel()"
+    (cancel)="confirmCancel = null">
+  </app-confirm-modal>
+
+</div>

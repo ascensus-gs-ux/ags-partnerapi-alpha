@@ -1,0 +1,63 @@
+<div>
+  <div class="int-intro">
+    <h2 class="int-intro__title">Troubleshoot</h2>
+    <p class="int-intro__lead">Resolve the most common integration errors, understand response targets by severity, and know when to open a support ticket.</p>
+  </div>
+
+  <div id="ts-errors" class="int-block">
+    <h3 class="int-block__title">Common errors</h3>
+    <p class="int-block__sub">Each entry pairs the error you'll see with its cause and resolution.</p>
+    <div class="tshoot">
+      <div *ngFor="let e of COMMON_ERRORS" class="tshoot__item">
+        <div class="tshoot__head">
+          <span class="tshoot__error">{{ e.error }}</span>
+        </div>
+        <div class="tshoot__body">
+          <div class="tshoot__row">
+            <span class="tshoot__key">Cause</span>
+            <span class="tshoot__val">{{ e.cause }}</span>
+          </div>
+          <div class="tshoot__row">
+            <span class="tshoot__key">Resolution</span>
+            <span class="tshoot__val">
+              <ng-container *ngIf="e.resolution === 'CONFIGURE_LINK'">
+                Regenerate the feed's key in <agsup-button type="button" class="int-inline-link" (click)="onGoConfigure.emit()">Configure APIs</agsup-button>, redeploy the stored credential, and retry.
+              </ng-container>
+              <ng-container *ngIf="e.resolution === 'TICKET_LINK'">
+                Re-enable web access for the account, or <agsup-button type="button" class="int-inline-link" (click)="onGoTickets.emit()">submit a ticket</agsup-button> if it cannot be enabled.
+              </ng-container>
+              <ng-container *ngIf="e.resolution !== 'CONFIGURE_LINK' && e.resolution !== 'TICKET_LINK'">
+                {{ e.resolution }}
+              </ng-container>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="ts-sla" class="int-block">
+    <h3 class="int-block__title">Severity levels &amp; response targets</h3>
+    <p class="int-block__sub">Target first-response times when you open a ticket.</p>
+    <table class="param-table">
+      <thead><tr><th>Severity</th><th>When to use</th><th>Target response</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let row of SLA">
+          <td data-label="Severity"><span class="int-gloss__term">{{ row[0] }}</span></td>
+          <td data-label="When to use">{{ row[1] }}</td>
+          <td data-label="Target response">{{ row[2] }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="ts-support" class="int-block">
+    <h3 class="int-block__title">Submitting tickets</h3>
+    <p class="int-block__sub">If a resolution above doesn't clear the issue, open a ticket with the error code, endpoint, timestamp, and affected account so we can route it quickly.</p>
+    <div class="int-cta-row">
+      <agsup-button type="button" class="btn btn--primary btn--icon-right" (click)="onGoTickets.emit()">
+        Go to Support Tickets ›
+      </agsup-button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,131 @@
+<div>
+  <div class="int-intro">
+    <h2 class="int-intro__title">Get started</h2>
+    <p class="int-intro__lead">Everything you need to stand up your integration. Work through the checklist, confirm your partner requirements, and pick the right channel for each function.</p>
+  </div>
+
+  <div id="gs-checklist" class="int-block">
+    <h3 class="int-block__title">Onboarding checklist</h3>
+    <p class="int-block__sub">Complete these three steps to begin calling the account service.</p>
+    <ul class="checklist">
+      <li *ngFor="let step of ONBOARDING">
+        <div class="checklist__item checklist__item--static">
+          <span class="checklist__check is-checked" aria-hidden="true">✓</span>
+          <span class="checklist__body" style="font-weight:400">
+            <a *ngIf="step.link === 'swagger'" class="checklist__link" [href]="SWAGGER_URL" target="_blank" rel="noopener noreferrer" style="padding:0 8px 0 0">
+              {{ step.title }} ↗
+            </a>
+            <agsup-button *ngIf="step.link === 'configure'" type="button" class="checklist__link" (click)="onGoConfigure.emit()" style="padding:0 8px 0 0">
+              {{ step.title }} ›
+            </agsup-button>
+            <span *ngIf="!step.link" class="checklist__title" style="padding:0 8px 0 0;font-weight:600">{{ step.title }}</span>
+            <span *ngIf="step.desc" class="checklist__desc" style="font-size:16px;line-height:23px">{{ step.desc }}</span>
+          </span>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <div id="gs-requirements" class="int-block">
+    <h3 class="int-block__title">Partner requirements</h3>
+    <p class="int-block__sub">Trust between your application and Ascensus is established before any call succeeds.</p>
+    <ul class="checklist">
+      <li *ngFor="let req of PARTNER_REQS">
+        <div class="checklist__item checklist__item--static">
+          <span class="checklist__check checklist__check--arrow" aria-hidden="true">→</span>
+          <span class="checklist__body" style="font-weight:400">
+            <span class="checklist__title" style="padding:0 8px 0 0;font-weight:600">{{ req }}</span>
+          </span>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <div id="gs-menu" class="int-block">
+    <h3 class="int-block__title">Integration menu</h3>
+    <p class="int-block__sub">Each business function is delivered through the channel below.</p>
+    <div class="int-routes">
+      <div class="int-route"><span class="int-route__name">Contributions</span><span class="int-route__map" aria-hidden="true">→</span><span class="int-route__channel">API</span></div>
+      <div class="int-route"><span class="int-route__name">Withdrawals</span><span class="int-route__map" aria-hidden="true">→</span><span class="int-route__channel">MFE</span></div>
+      <div class="int-route"><span class="int-route__name">Exchanges</span><span class="int-route__map" aria-hidden="true">→</span><span class="int-route__channel">MFE</span></div>
+    </div>
+  </div>
+
+  <div id="gs-glossary" class="int-block">
+    <h3 class="int-block__title">Glossary</h3>
+    <p class="int-block__sub">High-level terms you'll meet throughout this integration.</p>
+    <div class="int-gloss">
+      <div *ngFor="let item of GLOSSARY" class="int-gloss__row">
+        <span class="int-gloss__term">{{ item[0] }}</span>
+        <span class="int-gloss__def">{{ item[1] }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="gs-faq" class="int-block" style="padding:32px 0 0;margin:32px 0 0">
+    <h3 class="int-block__title" style="margin-bottom:16px;margin:0 0 32px">Frequently asked questions</h3>
+    <div class="faq">
+
+      <div class="faq__item">
+        <agsup-button type="button" class="faq__q" [attr.aria-expanded]="faqOpen === 0" (click)="toggleFaq(0)">
+          <span class="faq__q-text">What do I need before I can call an API?</span>
+          <span [class]="'faq__chevron' + (faqOpen === 0 ? ' is-open' : '')" aria-hidden="true">⌄</span>
+        </agsup-button>
+        <div *ngIf="faqOpen === 0" class="faq__a">
+          <p>A generated feed API key, your egress IP ranges registered with Ascensus for non-production access, and a registered X.509 public certificate used to sign your client and user assertions.</p>
+        </div>
+      </div>
+
+      <div class="faq__item">
+        <agsup-button type="button" class="faq__q" [attr.aria-expanded]="faqOpen === 1" (click)="toggleFaq(1)">
+          <span class="faq__q-text">How do I get my API key?</span>
+          <span [class]="'faq__chevron' + (faqOpen === 1 ? ' is-open' : '')" aria-hidden="true">⌄</span>
+        </agsup-button>
+        <div *ngIf="faqOpen === 1" class="faq__a">
+          <p>Open the <agsup-button type="button" class="int-inline-link" (click)="onGoConfigure.emit()" style="font-weight:500">Configure APIs</agsup-button> tab, expand an application, and enable the feed you need.</p>
+        </div>
+      </div>
+
+      <div class="faq__item">
+        <agsup-button type="button" class="faq__q" [attr.aria-expanded]="faqOpen === 2" (click)="toggleFaq(2)">
+          <span class="faq__q-text">Which functions use an API vs. an MFE?</span>
+          <span [class]="'faq__chevron' + (faqOpen === 2 ? ' is-open' : '')" aria-hidden="true">⌄</span>
+        </agsup-button>
+        <div *ngIf="faqOpen === 2" class="faq__a">
+          <p>Contributions are handled through a direct API integration. Withdrawals and Exchanges are delivered as Micro Front Ends (MFEs) that you embed and reach through Partner SSO.</p>
+        </div>
+      </div>
+
+      <div class="faq__item">
+        <agsup-button type="button" class="faq__q" [attr.aria-expanded]="faqOpen === 3" (click)="toggleFaq(3)">
+          <span class="faq__q-text">Why was my contribution or update rejected?</span>
+          <span [class]="'faq__chevron' + (faqOpen === 3 ? ' is-open' : '')" aria-hidden="true">⌄</span>
+        </agsup-button>
+        <div *ngIf="faqOpen === 3" class="faq__a">
+          <p>The most common causes are account status and freeze codes. Only accounts in status <strong>91</strong> can be modified. The <agsup-button type="button" class="int-inline-link" (click)="onGoTroubleshoot.emit()" style="font-weight:500">Troubleshoot</agsup-button> tab lists each error.</p>
+        </div>
+      </div>
+
+      <div class="faq__item">
+        <agsup-button type="button" class="faq__q" [attr.aria-expanded]="faqOpen === 4" (click)="toggleFaq(4)">
+          <span class="faq__q-text">When are APIs available? (Federal holiday schedule)</span>
+          <span [class]="'faq__chevron' + (faqOpen === 4 ? ' is-open' : '')" aria-hidden="true">⌄</span>
+        </agsup-button>
+        <div *ngIf="faqOpen === 4" class="faq__a">
+          <p>APIs accept requests 24/7. Transaction posting and settlement follow the U.S. financial calendar.</p>
+          <table class="param-table">
+            <thead><tr><th>Holiday</th><th>Date</th><th>Processing</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let h of holidays">
+                <td [attr.data-label]="'Holiday'">{{ h[0] }}</td>
+                <td [attr.data-label]="'Date'">{{ h[1] }}</td>
+                <td [attr.data-label]="'Processing'">Next business day</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

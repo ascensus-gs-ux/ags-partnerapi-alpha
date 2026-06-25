@@ -1,0 +1,126 @@
+<div class="login" data-screen-label="Login">
+
+  <app-toast *ngIf="notice" [message]="notice" (close)="onClearNotice.emit()"></app-toast>
+
+  <div class="login__container">
+    <div class="login__bg" aria-hidden="true"></div>
+
+    <!-- Left column -->
+    <div class="login__left">
+      <div class="login__top">
+        <div class="login__logo" style="margin: 0px 0px 30px">
+          <img class="login__logo-img" [src]="LOGO" alt="Plan Logo" />
+        </div>
+        <h1 class="login__heading" style="margin: 0px; padding: 32px 0px 0px">
+          Log in to the DevConnect Portal
+        </h1>
+        <p class="login__subtext">
+          Manage tickets, troubleshoot issues, and access up-to-date API
+          documentation all in one place, purpose-built for partner developers.
+        </p>
+      </div>
+
+      <div class="login__bottom">
+        <ul class="login__benefits" style="margin: 96px 0px 0px">
+          <li class="login__benefit">
+            <span class="login__benefit-icon"><app-icon-check-circle [size]="28"></app-icon-check-circle></span>
+            <span>Track and resolve issues faster in one place</span>
+          </li>
+          <li class="login__benefit">
+            <span class="login__benefit-icon"><app-icon-check-circle [size]="28"></app-icon-check-circle></span>
+            <span>Access clear, up-to-date API docs anytime</span>
+          </li>
+          <li class="login__benefit">
+            <span class="login__benefit-icon"><app-icon-check-circle [size]="28"></app-icon-check-circle></span>
+            <span>Simplify collaboration with built-in dev tools</span>
+          </li>
+        </ul>
+
+        <div class="login__help">
+          <span class="login__help-icon"><app-icon-phone-circle [size]="32"></app-icon-phone-circle></span>
+          <p class="login__help-text">
+            <strong>Need help?</strong> Please call Customer Service at (123) 456-7890,
+            Monday-Friday 8:00 am to 5:00 pm ET.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column — login form card -->
+    <div class="login__card">
+      <form class="login__form" (submit)="submit($event)" novalidate>
+        <div class="login__header">
+          <span class="login__eyebrow">Log in to the Portal</span>
+          <span class="login__register">
+            Not registered?
+            <agsup-button type="button" class="login__register-link" (click)="$event.preventDefault()">
+              Register
+            </agsup-button>
+          </span>
+        </div>
+
+        <div *ngIf="error" class="login__error" role="alert">
+          <app-icon-alert [size]="20"></app-icon-alert>
+          <span>
+            Invalid email or password. Please check your credentials and try again.
+          </span>
+        </div>
+
+        <div class="login__fields">
+          <div class="login-field">
+            <div class="login-field__control">
+              <input
+                id="login-email"
+                type="email"
+                [class]="'login-field__input' + (error ? ' has-error' : '')"
+                placeholder="Work Email Address"
+                autocomplete="username"
+                [value]="email"
+                (input)="onEmailChange($any($event.target).value)"
+                aria-label="Work Email Address"
+                [attr.aria-invalid]="error" />
+              <span class="login-field__icon"><app-icon-envelope [size]="22"></app-icon-envelope></span>
+            </div>
+          </div>
+
+          <div class="login-field">
+            <div class="login-field__control">
+              <input
+                id="login-password"
+                [type]="showPassword ? 'text' : 'password'"
+                [class]="'login-field__input' + (error ? ' has-error' : '')"
+                placeholder="Password"
+                autocomplete="current-password"
+                [value]="password"
+                (input)="onPasswordChange($any($event.target).value)"
+                aria-label="Password"
+                [attr.aria-invalid]="error" />
+              <agsup-button
+                type="button"
+                class="login-field__toggle"
+                (click)="showPassword = !showPassword"
+                [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+                [attr.aria-pressed]="showPassword">
+                <app-icon-eye-off *ngIf="showPassword" [size]="22"></app-icon-eye-off>
+                <app-icon-eye *ngIf="!showPassword" [size]="22"></app-icon-eye>
+              </agsup-button>
+            </div>
+          </div>
+
+          <agsup-button type="button" class="login__forgot" (click)="onForgotPassword.emit()">
+            Forgot Password
+          </agsup-button>
+        </div>
+
+        <agsup-button type="button" class="login__submit" [disabled]="loading" (click)="submit($event)">
+          <ng-container *ngIf="loading">
+            <span class="login__spinner" aria-hidden="true"></span>
+            <span>Signing in…</span>
+          </ng-container>
+          <ng-container *ngIf="!loading">Next</ng-container>
+        </agsup-button>
+      </form>
+    </div>
+
+  </div>
+</div>

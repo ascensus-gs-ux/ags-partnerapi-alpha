@@ -1,0 +1,227 @@
+<!-- Confirm cancel replaces modal when active -->
+<app-confirm-modal
+  *ngIf="confirmCancel"
+  [message]="isEdit
+    ? 'You\'re about to cancel editing ticket ' + ticket.id + '. Your changes won\'t be saved.'
+    : 'You\'re about to cancel creating this ticket. Your progress won\'t be saved.'"
+  (confirm)="onClose.emit()"
+  (cancel)="confirmCancel = false">
+</app-confirm-modal>
+
+<ng-container *ngIf="!confirmCancel">
+  <div class="modal-overlay">
+    <div class="modal" role="dialog" aria-labelledby="modal-title">
+
+      <div class="modal__head">
+        <div>
+          <h2 class="modal__title" id="modal-title">{{ title }}</h2>
+        </div>
+        <agsup-button class="modal__close" (click)="onClose.emit()" aria-label="Close dialog">✕</agsup-button>
+      </div>
+
+      <div class="modal__body">
+
+        <!-- Stepper -->
+        <div class="stepper" role="list">
+          <div
+            *ngFor="let label of steps; let i = index"
+            [class]="'stepper__step' + (i === step ? ' is-active' : '') + (i < step ? ' is-done' : '')"
+            role="listitem">
+            <span class="stepper__circle">
+              <ng-container *ngIf="i < step; else stepNum">✓</ng-container>
+              <ng-template #stepNum>{{ i + 1 }}</ng-template>
+            </span>
+            <span class="stepper__label">{{ label }}</span>
+          </div>
+        </div>
+
+        <!-- Step 0: Ticket Details -->
+        <div *ngIf="step === 0">
+          <div class="field">
+            <label class="field__label" for="t-type">Ticket type</label>
+            <select
+              id="t-type"
+              [class]="'select' + (errors['type'] ? ' has-error' : '')"
+              [value]="form.type"
+              (change)="setField('type', $any($event.target).value)">
+              <option value="">Select a type…</option>
+              <option *ngFor="let t of TICKET_TYPES" [value]="t">{{ t }}</option>
+            </select>
+            <span *ngIf="errors['type']; else typeHint" class="field__error">{{ errors['type'] }}</span>
+            <ng-template #typeHint>
+              <span class="field__hint" style="font-weight:600;line-height:1.4">
+                <ng-container *ngIf="!form.type">Choose the topic that best matches your request.</ng-container>
+                <ng-container *ngIf="form.type && routing">Tip: For faster support with API errors, click the icon next to the error status to copy the details and paste them into the description field.</ng-container>
+                <ng-container *ngIf="form.type && !routing">No technical details needed — just describe your request.</ng-container>
+              </span>
+            </ng-template>
+          </div>
+
+          <div *ngIf="multiPlan" class="field">
+            <label class="field__label" for="t-plan">Plan</label>
+            <select
+              id="t-plan"
+              [class]="'select' + (errors['plan'] ? ' has-error' : '')"
+              [value]="form.plan"
+              (change)="setField('plan', $any($event.target).value)">
+              <option value="">Select a plan…</option>
+              <option *ngFor="let p of plans" [value]="p">{{ p }}</option>
+            </select>
+            <span *ngIf="errors['plan']" class="field__error">{{ errors['plan'] }}</span>
+          </div>
+
+          <ng-container *ngIf="routing">
+            <div class="field">
+              <label class="field__label" for="t-app">Application</label>
+              <select
+                id="t-app"
+                [class]="'select' + (errors['application'] ? ' has-error' : '')"
+                [value]="form.application"
+                (change)="setField('application', $any($event.target).value)">
+                <option value="">Select an application…</option>
+                <option *ngFor="let a of applications" [value]="a.name">{{ a.name }}</option>
+                <option disabled>──────────────</option>
+                <option *ngFor="let s of APP_SPECIAL" [value]="s">{{ s }}</option>
+              </select>
+              <span *ngIf="errors['application']; else appHint" class="field__error">{{ errors['application'] }}</span>
+              <ng-template #appHint>
+                <span class="field__hint">Not sure? Choose "Don't Know" and we'll route it for you.</span>
+              </ng-template>
+            </div>
+
+            <div *ngIf="realApp && feedOptions.length > 0" class="field">
+              <label class="field__label" for="t-feed">
+                Feed <span style="font-weight:500;color:var(--color-gray-60)">(optional)</span>
+              </label>
+              <select id="t-feed" class="select" [value]="form.feed" (change)="setField('feed', $any($event.target).value)">
+                <option value="">All feeds / not sure</option>
+                <option *ngFor="let f of feedOptions" [value]="f">{{ f }}</option>
+              </select>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label class="field__label" for="t-env">Environment</label>
+                <select id="t-env" class="select" [value]="form.environment" (change)="setField('environment', $any($event.target).value)">
+                  <option>Sandbox</option>
+                  <option>UAT</option>
+                  <option>Production</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="field__label" for="t-endpoint">
+                  Endpoint <span style="font-weight:500;color:var(--color-gray-60)">(optional)</span>
+                </label>
+                <input
+                  id="t-endpoint"
+                  class="input"
+                  placeholder="e.g. POST /v2/enrollments"
+                  [value]="form.endpoint"
+                  (input)="setField('endpoint', $any($event.target).value)" />
+              </div>
+            </div>
+          </ng-container>
+        </div>
+
+        <!-- Step 1: Description -->
+        <div *ngIf="step === 1">
+          <div class="field">
+            <label class="field__label" for="t-summary">Summary</label>
+            <input
+              id="t-summary"
+              [class]="'input' + (errors['summary'] ? ' has-error' : '')"
+              [placeholder]="routing ? 'e.g. POST /enrollments returning 503 intermittently' : 'e.g. Clarify webhook retry policy in the docs'"
+              [value]="form.summary"
+              (input)="setField('summary', $any($event.target).value)"
+              maxlength="140" />
+            <span *ngIf="errors['summary']; else summaryHint" class="field__error">{{ errors['summary'] }}</span>
+            <ng-template #summaryHint>
+              <span class="field__hint">{{ form.summary.length }}/120</span>
+            </ng-template>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="t-desc">Description</label>
+            <textarea
+              id="t-desc"
+              [class]="'textarea' + (errors['description'] ? ' has-error' : '')"
+              [placeholder]="routing ? 'What did you expect? What happened instead? Include request IDs and timestamps if you have them.' : 'Tell us what you need. The more detail you can give, the faster we can help.'"
+              [value]="form.description"
+              (input)="setField('description', $any($event.target).value)">
+            </textarea>
+            <span *ngIf="errors['description']; else descHint" class="field__error">{{ errors['description'] }}</span>
+            <ng-template #descHint>
+              <span class="field__hint">
+                <ng-container *ngIf="routing">Tip: paste request IDs, timestamps and error codes. Don't paste API keys or PII — those are scrubbed automatically.</ng-container>
+                <ng-container *ngIf="!routing">Don't paste API keys or PII — those are scrubbed automatically.</ng-container>
+              </span>
+            </ng-template>
+          </div>
+
+          <div class="field">
+            <label class="field__label">
+              Upload files related to your request
+              <span style="font-weight:500;color:var(--color-gray-60)">(optional)</span>
+            </label>
+            <app-file-drop-zone
+              [files]="form.attachments"
+              (filesChange)="setField('attachments', $event)">
+            </app-file-drop-zone>
+          </div>
+        </div>
+
+        <!-- Step 2: Review -->
+        <div *ngIf="step === 2" class="review">
+          <dl>
+            <dt>Type:</dt><dd>{{ form.type || '—' }}</dd>
+            <ng-container *ngIf="multiPlan">
+              <dt>Plan:</dt><dd>{{ form.plan || '—' }}</dd>
+            </ng-container>
+            <dt>Priority:</dt>
+            <dd>
+              <span [class]="'pill ' + (form.priority === 'High' ? 'pill--high' : form.priority === 'Medium' ? 'pill--medium' : form.priority === 'Low' ? 'pill--low' : '')">
+                {{ (form.priority === 'High' || form.priority === 'Medium' || form.priority === 'Low') ? form.priority : 'Not Assigned' }}
+              </span>
+            </dd>
+            <dt>Summary:</dt><dd>{{ form.summary || '—' }}</dd>
+            <ng-container *ngIf="routing">
+              <dt>Application:</dt><dd>{{ form.application || '—' }}</dd>
+              <ng-container *ngIf="realApp && form.feed">
+                <dt>Feed:</dt><dd>{{ form.feed }}</dd>
+              </ng-container>
+              <dt>Environment:</dt><dd>{{ form.environment }}</dd>
+              <dt>Endpoint:</dt><dd>{{ form.endpoint || '—' }}</dd>
+            </ng-container>
+            <dt>Description:</dt><dd style="white-space:pre-wrap">{{ form.description || '—' }}</dd>
+            <dt>Attachments:</dt>
+            <dd>
+              <ng-container *ngIf="form.attachments && form.attachments.length; else noAttach">
+                {{ form.attachments | attachmentNames }}
+              </ng-container>
+              <ng-template #noAttach>None</ng-template>
+            </dd>
+          </dl>
+          <p class="review__note">Our support team typically responds within 1 business day and will assign priority based on the information provided to ensure timely assistance.</p>
+        </div>
+
+      </div><!-- /.modal__body -->
+
+      <div class="modal__foot">
+        <div class="modal__foot-group">
+          <agsup-button *ngIf="step > 0" class="btn btn--back" (click)="back()">← Back</agsup-button>
+        </div>
+        <div class="modal__foot-group">
+          <ng-container *ngIf="step < 2">
+            <agsup-button class="btn btn--secondary" (click)="confirmCancel = true">Cancel</agsup-button>
+            <agsup-button class="btn btn--primary" (click)="next()">Continue</agsup-button>
+          </ng-container>
+          <ng-container *ngIf="step === 2">
+            <agsup-button class="btn btn--secondary" (click)="confirmCancel = true">Cancel</agsup-button>
+            <agsup-button class="btn btn--primary" (click)="submit()">{{ isEdit ? 'Save' : 'Submit' }}</agsup-button>
+          </ng-container>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</ng-container>

@@ -1,0 +1,30 @@
+<div class="modal-overlay" (mousedown)="overlayClick($event)">
+  <div class="modal modal--ticket-view" role="dialog" aria-labelledby="view-ticket-title">
+    <div class="modal__head">
+      <div>
+        <h2 class="modal__title" id="view-ticket-title">Ticket Details</h2>
+      </div>
+      <agsup-button class="modal__close" (click)="onClose.emit()" aria-label="Close dialog">✕</agsup-button>
+    </div>
+
+    <div class="modal__body">
+      <div class="review">
+        <dl>
+          <dt>Ticket ID:</dt><dd>{{ ticket.id }}</dd>
+          <dt>Type:</dt><dd>{{ ticket.type }}</dd>
+          <dt>Status:</dt><dd><app-status-cell [value]="ticket.status"></app-status-cell></dd>
+          <dt>Priority:</dt><dd><app-priority-pill [value]="ticket.priority"></app-priority-pill></dd>
+          <ng-container *ngIf="multiPlan">
+            <dt>Plan:</dt><dd>{{ ticket.plan || '—' }}</dd>
+          </ng-container>
+          <dt>Submitted by:</dt><dd>{{ ticket.submitter }}</dd>
+          <dt>Date:</dt><dd><app-date-cell [iso]="ticket.date"></app-date-cell></dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="modal__foot">
+      <agsup-button class="btn btn--primary modal__foot--full" (click)="onClose.emit()">Close</agsup-button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,120 @@
+<div class="tfa" [attr.data-screen-label]="step === 1 ? '2FA — Request PIN' : '2FA — Enter PIN'">
+  <div class="tfa__main">
+
+    <div class="tfa__mobile-logo">
+      <img [src]="LOGO" alt="Plan Logo" />
+    </div>
+
+    <div class="tfa__header">
+      <span class="tfa__eyebrow">
+        Log in to the Dashboard <span class="tfa__eyebrow-step">(Step {{ step + 1 }} of 3)</span>
+      </span>
+      <h1 class="tfa__title">Let's verify your login information</h1>
+      <p class="tfa__subtitle">{{ subtitle }}</p>
+    </div>
+
+    <div class="tfa__form">
+
+      <!-- Step 1: PIN delivery method -->
+      <ng-container *ngIf="step === 1">
+        <div class="tfa__radios" role="radiogroup" aria-label="PIN delivery method">
+          <label class="tfa-radio">
+            <input
+              type="radio"
+              name="pin-method"
+              class="tfa-radio__input"
+              [checked]="method === 'text'"
+              (change)="setMethod('text')" />
+            <span class="tfa-radio__label">Text to xxx-xxx-5555</span>
+          </label>
+          <label class="tfa-radio">
+            <input
+              type="radio"
+              name="pin-method"
+              class="tfa-radio__input"
+              [checked]="method === 'voice'"
+              (change)="setMethod('voice')" />
+            <span class="tfa-radio__label">Voice call to xxx-xxx-5555</span>
+          </label>
+        </div>
+        <div *ngIf="methodError" class="tfa__form-error" role="alert">
+          <span>Please select a method to continue.</span>
+        </div>
+      </ng-container>
+
+      <!-- Step 2: PIN entry -->
+      <ng-container *ngIf="step === 2">
+        <div class="tfa-field">
+          <div class="tfa-field__control">
+            <input
+              id="tfa-pin"
+              type="text"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              maxlength="6"
+              [class]="'tfa-field__input' + (pinError ? ' has-error' : '')"
+              placeholder="Enter PIN"
+              [value]="pin"
+              (input)="onPinInput($any($event.target).value)"
+              (keydown)="onPinKeyDown($event)"
+              aria-label="Enter PIN"
+              [attr.aria-invalid]="!!pinError" />
+          </div>
+          <ng-container *ngIf="pinError; else pinHint">
+            <div class="tfa-field__error" role="alert">
+              <span>{{ pinError }}</span>
+            </div>
+          </ng-container>
+          <ng-template #pinHint>
+            <span class="tfa-field__hint">
+              Please enter the PIN sent to your selected method.
+            </span>
+          </ng-template>
+        </div>
+      </ng-container>
+
+    </div>
+
+    <div class="tfa__footer">
+      <hr class="tfa__hr" />
+      <div class="tfa__nav">
+        <agsup-button type="button" class="tfa-back" (click)="handleBack()">
+          <span>Back</span>
+        </agsup-button>
+        <div class="tfa__nav-actions">
+          <agsup-button type="button" class="tfa-btn tfa-btn--secondary" (click)="confirmCancel = true">
+            Cancel
+          </agsup-button>
+          <agsup-button type="button" class="tfa-btn tfa-btn--primary" (click)="handleNext()">
+            Next
+          </agsup-button>
+        </div>
+      </div>
+      <div class="tfa__footer-meta">
+        <hr class="tfa__hr tfa__hr--meta" />
+        <p class="tfa__required">All fields are required unless indicated as optional.</p>
+        <app-help-block [className]="'tfa__footer-help'"></app-help-block>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Gray stepper sidebar -->
+  <aside class="tfa__aside">
+    <div class="tfa__aside-logo">
+      <img [src]="LOGO" alt="Plan Logo" />
+    </div>
+    <hr class="tfa__aside-hr" />
+    <app-stepper [step]="step"></app-stepper>
+    <app-help-block [className]="'tfa__help'"></app-help-block>
+  </aside>
+
+  <!-- Confirm cancel modal -->
+  <app-confirm-modal
+    *ngIf="confirmCancel"
+    message="You're about to cancel verifying your login. You'll be returned to the login screen."
+    (confirm)="onCancel.emit()"
+    (cancel)="confirmCancel = false">
+  </app-confirm-modal>
+
+</div>

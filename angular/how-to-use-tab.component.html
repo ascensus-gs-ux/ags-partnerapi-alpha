@@ -1,0 +1,164 @@
+<div>
+  <div class="int-intro">
+    <h2 class="int-intro__title">How to use the APIs</h2>
+    <p class="int-intro__lead">A short orientation to calling the account service: the rules that govern every request, where the full reference lives, and how authentication works.</p>
+  </div>
+
+  <div id="use-reference" class="int-block">
+    <h3 class="int-block__title">Full API reference</h3>
+    <p class="int-block__sub">Every endpoint, parameter, request body, and response code is documented in Swagger.</p>
+    <div class="int-cta-row" style="padding:0 0 24px">
+      <a class="btn btn--primary btn--icon-right" [href]="SWAGGER_URL" target="_blank" rel="noopener noreferrer">
+        View Full API Reference ↗
+      </a>
+      <a class="btn btn--secondary btn--icon-right"
+         href="account-service-production.postman_collection.json"
+         download="account-service-production.postman_collection.json">
+        Download Postman Collection ↓
+      </a>
+    </div>
+  </div>
+
+  <div id="use-sso" class="int-block" style="margin:24px 0 0;padding:32px 0 8px">
+    <h3 class="int-block__title">SSO &amp; authentication</h3>
+    <p class="int-block__sub" style="margin:0 0 32px;padding:0 0 8px">
+      Partner SSO uses the OAuth 2.1 confidential-client model with the <code>private_key_jwt</code> authentication method (RFC 7523 JWT bearer profile). No shared secrets are exchanged.
+    </p>
+
+    <div style="margin-top:20px">
+      <h4 class="int-subhead">Authentication model</h4>
+      <ul class="doc-list" style="margin:8px 0 16px;padding:0 0 16px">
+        <li>Confidential client over TLS — your application authenticates with a signed JWT, not a client secret.</li>
+        <li>Both assertions are signed with the same X.509 key pair registered for your application.</li>
+        <li style="margin:0">Assertions are short-lived, single-use, and scoped to one environment — generate a new <code>jti</code> (UUID) per request.</li>
+      </ul>
+    </div>
+
+    <div style="margin-top:24px">
+      <h4 class="int-subhead">SSO flow</h4>
+      <ul class="doc-list" style="margin:8px 0 0;padding:0 0 16px">
+        <li>Browser-based session model — SSO is carried by the user's authenticated browser session.</li>
+        <li>No re-authentication between the partner and an embedded MFE within the same session.</li>
+        <li>Sessions are browser-bound and end when the browser session ends.</li>
+      </ul>
+    </div>
+
+    <div style="margin-top:24px">
+      <h4 class="int-subhead">Partner setup</h4>
+      <ul class="doc-list" style="padding:0 0 16px">
+        <li>Requires a registered application and certificate with Ascensus.</li>
+        <li>Authentication uses an X.509 key pair with the <code>private_key_jwt</code> method.</li>
+        <li>Keys are managed through the Admin Portal.</li>
+      </ul>
+    </div>
+
+    <div style="margin:24px 0 0;padding:0 0 16px">
+      <span class="doc-section__label">Token request (POST /oauth2/token)</span>
+      <div class="code-block">
+        <div class="code-block__bar">
+          <span class="code-block__lang" style="color:rgb(255,255,255)">bash</span>
+          <agsup-button type="button" [class]="'code-block__copy' + (copied['token'] ? ' is-copied' : '')" (click)="copy('token', TOKEN_CURL)">
+            {{ copied['token'] ? 'Copied' : 'Copy' }}
+          </agsup-button>
+        </div>
+        <pre style="color:rgb(255,255,255)"><code style="color:rgb(255,255,255)">{{ TOKEN_CURL }}</code></pre>
+      </div>
+    </div>
+
+    <div style="margin:24px 0 0;padding:0 0 16px">
+      <span class="doc-section__label">User assertion JWT claims</span>
+      <div class="code-block">
+        <div class="code-block__bar">
+          <span class="code-block__lang" style="color:rgb(255,255,255)">json</span>
+          <agsup-button type="button" [class]="'code-block__copy' + (copied['assertion'] ? ' is-copied' : '')" (click)="copy('assertion', USER_ASSERTION)">
+            {{ copied['assertion'] ? 'Copied' : 'Copy' }}
+          </agsup-button>
+        </div>
+        <pre style="color:rgb(255,255,255)"><code style="color:rgb(255,255,255)">{{ USER_ASSERTION }}</code></pre>
+      </div>
+    </div>
+
+    <div style="margin-top:24px;padding:0 0 16px">
+      <h4 class="int-subhead">Token requirements</h4>
+      <ul class="doc-list" style="padding:0">
+        <li>Each request must present a unique JWT — generate a new <code>jti</code> (UUID) every time.</li>
+        <li>Tokens are short-lived; <code>iat</code> and <code>exp</code> are enforced.</li>
+        <li>Reuse of a JWT fails authentication.</li>
+      </ul>
+    </div>
+
+    <div style="margin-top:20px">
+      <div class="callout callout--danger" style="margin:0 0 16px">
+        <div class="callout__label">Error &amp; failure conditions</div>
+        <ul class="callout__list">
+          <li>Expired or reused JWT → authentication fails.</li>
+          <li>Incorrect environment → token rejected.</li>
+          <li>Missing proxy routing → session fails.</li>
+          <li>Freeze code or invalid account status → request blocked.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div id="use-restrictions" class="int-block" style="padding:32px 0 0;margin:32px 0 0">
+    <h3 class="int-block__title">Restrictions &amp; requirements</h3>
+    <p class="int-block__sub" style="padding:0 0 16px">Account-level conditions that determine whether a request can proceed.</p>
+    <div class="callout callout--warn" style="margin:0 0 16px">
+      <div class="callout__label">Important rules</div>
+      <ul class="callout__list">
+        <li>Only status 91 (active) accounts can be modified.</li>
+        <li>Freeze codes block transactions until the restriction is removed.</li>
+        <li>Web-disabled accounts prevent all API activity.</li>
+      </ul>
+    </div>
+
+    <div style="margin-top:20px" class="faq">
+      <div class="faq__item">
+        <agsup-button type="button" class="faq__q" [attr.aria-expanded]="restrictionOpen === 0" (click)="toggleRestriction(0)">
+          <span class="faq__q-text">Account Status</span>
+          <span [class]="'faq__chevron' + (restrictionOpen === 0 ? ' is-open' : '')" aria-hidden="true">⌄</span>
+        </agsup-button>
+        <div *ngIf="restrictionOpen === 0" class="faq__a">
+          <p>Only accounts with status <strong>91</strong> can be modified via <code>PUT</code>.</p>
+        </div>
+      </div>
+      <div class="faq__item">
+        <agsup-button type="button" class="faq__q" [attr.aria-expanded]="restrictionOpen === 1" (click)="toggleRestriction(1)">
+          <span class="faq__q-text">Web Access Disabled</span>
+          <span [class]="'faq__chevron' + (restrictionOpen === 1 ? ' is-open' : '')" aria-hidden="true">⌄</span>
+        </agsup-button>
+        <div *ngIf="restrictionOpen === 1" class="faq__a">
+          <p>When enabled, all activity is blocked. Confirm <code>webDisabled</code> is <code>false</code> before proceeding.</p>
+        </div>
+      </div>
+      <div class="faq__item">
+        <agsup-button type="button" class="faq__q" [attr.aria-expanded]="restrictionOpen === 2" (click)="toggleRestriction(2)">
+          <span class="faq__q-text">Freeze Codes</span>
+          <span [class]="'faq__chevron' + (restrictionOpen === 2 ? ' is-open' : '')" aria-hidden="true">⌄</span>
+        </agsup-button>
+        <div *ngIf="restrictionOpen === 2" class="faq__a">
+          <p>Freeze codes block contributions or transactions until removed.</p>
+          <table class="param-table param-table--fixed">
+            <thead><tr><th>Code</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let fc of FREEZE_CODES">
+                <td data-label="Code"><code>{{ fc[0] }}</code></td>
+                <td data-label="Description">{{ fc[1] }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <span class="doc-section__label">Example — account with active restrictions</span>
+          <div class="code-block">
+            <div class="code-block__bar">
+              <span class="code-block__lang" style="color:rgb(255,255,255)">json</span>
+              <agsup-button type="button" [class]="'code-block__copy' + (copied['restrictions'] ? ' is-copied' : '')" (click)="copy('restrictions', RESTRICTIONS_JSON)">
+                {{ copied['restrictions'] ? 'Copied' : 'Copy' }}
+              </agsup-button>
+            </div>
+            <pre style="color:rgb(255,255,255)"><code style="color:rgb(255,255,255)">{{ RESTRICTIONS_JSON }}</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

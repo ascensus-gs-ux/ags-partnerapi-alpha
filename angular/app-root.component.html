@@ -1,0 +1,31 @@
+<app-login-screen
+  *ngIf="screen === 'login'"
+  [notice]="notice"
+  [logoUrl]="brandLogo"
+  (onClearNotice)="notice = null"
+  (onSuccess)="notice = null; go('2fa-request')"
+  (onForgotPassword)="notice = null; go('forgot-verify')">
+</app-login-screen>
+
+<app-forgot-password-screen
+  *ngIf="isForgotScreen"
+  [initialStep]="forgotInitialStep"
+  [logoUrl]="brandLogo"
+  (onComplete)="go('login')"
+  (onCancel)="go('login')">
+</app-forgot-password-screen>
+
+<app-two-factor-screen
+  *ngIf="is2fa"
+  [initialStep]="twoFactorInitialStep"
+  [logoUrl]="brandLogo"
+  (onComplete)="go('dashboard-api')"
+  (onCancel)="go('login')">
+</app-two-factor-screen>
+
+<app-shell
+  *ngIf="isDashboard"
+  [initialNav]="dashboardInitialNav"
+  [logoUrl]="brandLogo"
+  (logout)="notice = 'You have been logged out of your account.'; go('login')">
+</app-shell>

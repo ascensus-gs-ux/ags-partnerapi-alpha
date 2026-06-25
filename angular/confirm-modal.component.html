@@ -1,0 +1,19 @@
+<div class="modal-overlay">
+  <div class="modal modal--confirm" role="alertdialog" aria-labelledby="confirm-title">
+    <div class="modal__head">
+      <div>
+        <h2 class="modal__title" id="confirm-title">{{ title }}</h2>
+      </div>
+      <agsup-button class="modal__close" (click)="cancel.emit()" aria-label="Close dialog">
+        ✕
+      </agsup-button>
+    </div>
+    <div class="modal__body">
+      <p class="confirm__msg">{{ message }}</p>
+    </div>
+    <div class="modal__foot">
+      <agsup-button class="btn btn--secondary" (click)="cancel.emit()">{{ cancelLabel }}</agsup-button>
+      <agsup-button class="btn btn--primary" (click)="confirm.emit()">{{ confirmLabel }}</agsup-button>
+    </div>
+  </div>
+</div>

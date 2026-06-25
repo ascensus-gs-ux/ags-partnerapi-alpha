@@ -1,0 +1,101 @@
+<!-- Breadcrumb -->
+<nav class="breadcrumb" aria-label="Breadcrumb">
+  <button type="button" class="breadcrumb__link" (click)="back.emit()">Application APIs</button>
+  <span class="breadcrumb__sep" aria-hidden="true">&#8250;</span>
+  <span class="breadcrumb__current" aria-current="page">View API Documentation</span>
+</nav>
+
+<!-- Page head + search -->
+<div class="apidoc-head">
+  <h1 class="page__title">API Documentation</h1>
+  <div class="apidoc-search">
+    <span class="apidoc-search__icon">&#128269;</span>
+    <input
+      type="search"
+      [value]="query"
+      (input)="onQueryChange($any($event.target).value)"
+      placeholder="Search APIs or endpoints"
+      aria-label="Search APIs or endpoints" />
+  </div>
+</div>
+
+<!-- Mobile: dropdown replaces left rail -->
+<div class="apidoc__mobile-select">
+  <select class="select"
+    [value]="activeGroup ? activeGroup.id : ''"
+    (change)="selectApi($any($event.target).value)"
+    aria-label="Select an API">
+    <option *ngFor="let api of (filtered.length ? filtered : API_DOCS)" [value]="api.id">
+      {{ api.name }}
+    </option>
+  </select>
+</div>
+
+<!-- Main split layout -->
+<div class="apidoc">
+
+  <!-- Left rail -->
+  <div class="apidoc__tabs" role="tablist" aria-label="API groups">
+
+    <div *ngIf="filtered.length === 0" class="apidoc__empty" style="padding:24px 20px">
+      No matches.
+    </div>
+
+    <div *ngFor="let api of filtered"
+         [class]="'apidoc__group-block' + (api.id === activeApi ? ' is-active' : '')">
+
+      <button type="button" role="tab"
+        [attr.aria-selected]="api.id === activeApi"
+        [class]="'apidoc__group' + (api.id === activeApi ? ' is-active' : '')"
+        (click)="selectApi(api.id)">
+
+        <span [class]="'apidoc__group-caret' + (isGroupOpen(api.id) ? ' is-open' : '')"
+              role="button" [tabIndex]="-1"
+              [attr.aria-label]="isGroupOpen(api.id) ? 'Collapse' : 'Expand'"
+              (click)="toggleGroupCaret(api.id, $event)">
+          &#8250;
+        </span>
+        <span class="apidoc__group-label">{{ api.name }}</span>
+        <span class="apidoc__group-count">{{ api.endpoints.length }}</span>
+      </button>
+
+      <ul *ngIf="isGroupOpen(api.id)" class="apidoc__endpoints">
+        <li *ngFor="let ep of api.endpoints">
+          <button type="button" class="apidoc__endpoint-link" (click)="openEndpoint(api.id, ep.id)">
+            <app-method-badge [method]="ep.method" [small]="true"></app-method-badge>
+            <span class="apidoc__endpoint-path">{{ ep.railLabel }}</span>
+          </button>
+        </li>
+      </ul>
+
+    </div>
+  </div>
+
+  <!-- Right detail panel -->
+  <div class="apidoc__main">
+
+    <ng-container *ngIf="activeGroup; else noGroup">
+      <div class="apidoc__main-head">
+        <h2 class="apidoc__main-title">{{ activeGroup.name }}</h2>
+        <p class="apidoc__main-desc">{{ activeGroup.blurb }}</p>
+      </div>
+
+      <div *ngIf="activeGroup.endpoints.length === 0" class="apidoc__empty">
+        No endpoints match "{{ query }}".
+      </div>
+
+      <app-endpoint-section
+        *ngFor="let ep of activeGroup.endpoints"
+        [ep]="ep"
+        [open]="isEndpointOpen(ep.id)"
+        (toggled)="toggleEndpoint(ep.id)"
+        (toasted)="toasted.emit($event)">
+      </app-endpoint-section>
+    </ng-container>
+
+    <ng-template #noGroup>
+      <div class="apidoc__empty">Select an API to view its endpoints.</div>
+    </ng-template>
+
+  </div>
+</div>

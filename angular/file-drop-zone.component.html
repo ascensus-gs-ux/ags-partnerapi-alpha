@@ -1,0 +1,39 @@
+<div>
+  <div
+    [class]="'dropzone' + (dragging ? ' is-dragging' : '')"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave()"
+    (drop)="onDrop($event)">
+    <agsup-button type="button" class="dropzone__btn" (click)="openPicker(fileInput)">
+      Select files
+    </agsup-button>
+    <span class="dropzone__status">
+      <ng-container *ngIf="files.length; else noFiles">
+        {{ files.length }} file{{ files.length > 1 ? 's' : '' }} selected
+      </ng-container>
+      <ng-template #noFiles>
+        <span class="dropzone__hint">Drop files here to upload</span>
+      </ng-template>
+    </span>
+    <input
+      #fileInput
+      type="file"
+      multiple
+      class="dropzone__input"
+      (change)="onFileInput($event, fileInput)" />
+  </div>
+
+  <ul *ngIf="files.length > 0" class="dropzone__list">
+    <li *ngFor="let f of files; let i = index" class="dropzone__file">
+      <span class="dropzone__file-icon" aria-hidden="true">✓</span>
+      <span class="dropzone__file-name">{{ f.name }}</span>
+      <agsup-button
+        type="button"
+        class="dropzone__file-remove"
+        (click)="removeAt(i)"
+        [attr.aria-label]="'Remove ' + f.name">
+        ✕
+      </agsup-button>
+    </li>
+  </ul>
+</div>
